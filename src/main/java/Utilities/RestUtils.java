@@ -1,8 +1,12 @@
 package Utilities;
 
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
+import io.restassured.*;
+import io.restassured.response.*;
+import io.restassured.specification.*;
 import org.testng.*;
+
+import java.io.*;
+import java.util.*;
 
 import static io.restassured.RestAssured.*;
 
@@ -133,4 +137,46 @@ public class RestUtils {
         String success = response.jsonPath().getString("status");
         Assert.assertEquals(success, "success", "Success Code mismatch!");
     }
+
+    public static Response post(String endpoint, String body) {
+        return given()
+                .auth().preemptive().basic(TestBase.USER_EMAIL, TestBase.API_TOKEN)
+                .header("Content-Type", "application/json")
+                .body(body)
+                .when()
+                .post(TestBase.BASE_URL + endpoint);
+    }
+
+    public static Response put(String endpoint, String body) {
+        return given()
+                .auth().preemptive().basic(TestBase.USER_EMAIL, TestBase.API_TOKEN)
+                .header("Content-Type", "application/json")
+                .body(body)
+                .when()
+                .put(TestBase.BASE_URL + endpoint);
+    }
+
+    public static Response get(String endpoint, Map<String, String> params) {
+        RequestSpecification req = given()
+                .auth().preemptive().basic(TestBase.USER_EMAIL, TestBase.API_TOKEN);
+        if (params != null) req.queryParams(params);
+        return req.when().get(TestBase.BASE_URL + endpoint);
+    }
+
+    public static Response delete(String endpoint) {
+        return given()
+                .auth().preemptive().basic(TestBase.USER_EMAIL, TestBase.API_TOKEN)
+                .when()
+                .delete(TestBase.BASE_URL + endpoint);
+    }
+
+    public static Response attach(String endpoint, File file) {
+        return given()
+                .auth().preemptive().basic(TestBase.USER_EMAIL, TestBase.API_TOKEN)
+                .header("X-Atlassian-Token", "no-check")
+                .multiPart("file", file)
+                .when()
+                .post(TestBase.BASE_URL + endpoint);
+    }
+
 }

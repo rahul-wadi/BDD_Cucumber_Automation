@@ -1,7 +1,9 @@
 package Utilities;
 
+import io.restassured.response.Response;
 import org.json.simple.JSONObject;
 
+import java.io.File;
 import java.util.*;
 
 public class TestDataBuilder {
@@ -62,5 +64,56 @@ public class TestDataBuilder {
         Map<String, Object> payload = new HashMap<>();
         payload.put("customerName", newName);
         return payload;
+    }
+
+    public static String createDefect() {
+        JSONObject issue = new JSONObject();
+        JSONObject fields = new JSONObject();
+        JSONObject project = new JSONObject();
+        JSONObject issuetype = new JSONObject();
+
+        project.put("key", TestBase.PROJECT_KEY);
+        issuetype.put("name", "Bug");
+
+        fields.put("summary", "API Defect created via automation");
+        fields.put("description", "Defect created using REST Assured + Cucumber + TestNG");
+        fields.put("project", project);
+        fields.put("issuetype", issuetype);
+        issue.put("fields", fields);
+
+        Response res = RestUtils.post("/issue", issue.toString());
+        res.then().statusCode(201);
+
+        String id = res.jsonPath().getString("id");
+        TestBase.ISSUE_ID = id;
+        return id;
+    }
+
+    public static void updateDefect(String issueId) {
+        JSONObject updateBody = new JSONObject();
+        JSONObject fields = new JSONObject();
+        fields.put("summary", "Updated summary via API");
+        fields.put("description", "Updated description field");
+        updateBody.put("fields", fields);
+
+        RestUtils.put("/issue/" + issueId, updateBody.toString())
+                .then().statusCode(204);
+    }
+
+    public static void searchDefect(String issueId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("jql", "id=" + issueId);
+        RestUtils.get("/search", params)
+                .then().statusCode(200);
+    }
+
+    public static void attachFile(String issueId, File file) {
+        RestUtils.attach("/issue/" + issueId + "/attachments", file)
+                .then().statusCode(200);
+    }
+
+    public static void deleteDefect(String issueId) {
+        RestUtils.delete("/issue/" + issueId)
+                .then().statusCode(204);
     }
 }
